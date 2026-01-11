@@ -289,6 +289,8 @@ Hola! (Hello in Spanish)
 ### Overview
 The `azure-ai-studio-flow-function` folder contains an Azure Function that replicates an Azure AI Studio Prompt Flow. This function demonstrates how to convert a Prompt Flow created in Azure AI Studio into a serverless Azure Function. It processes user questions through GPT and returns structured responses with metadata.
 
+<img width="310" height="320" alt="image" src="https://github.com/user-attachments/assets/b58b8fd6-9c62-446a-91b7-45e00e206da4" />
+
 ### Features
 - ✅ **Prompt Flow Conversion**: Converts Azure AI Studio Prompt Flow to Azure Function
 - ✅ **Structured Responses**: Returns JSON responses with answer, original query, timestamp, and status
