@@ -8,6 +8,7 @@ A collection of Azure Functions demonstrating various Azure AI services integrat
 AiScripts/
 ├── azure-text-analytics-function/    # Text Analytics sentiment analysis function
 ├── azure-openai-function/            # Azure OpenAI GPT chat completions function
+├── azure-ai-studio-flow-function/    # Azure AI Studio Prompt Flow converted to Azure Function
 ├── [future-functions]/               # Additional Azure Functions will be added here
 └── README.md                         # This file
 ```
@@ -283,6 +284,152 @@ Hola! (Hello in Spanish)
 
 ---
 
+## 🎯 Azure AI Studio Flow Function
+
+### Overview
+The `azure-ai-studio-flow-function` folder contains an Azure Function that replicates an Azure AI Studio Prompt Flow. This function demonstrates how to convert a Prompt Flow created in Azure AI Studio into a serverless Azure Function. It processes user questions through GPT and returns structured responses with metadata.
+
+### Features
+- ✅ **Prompt Flow Conversion**: Converts Azure AI Studio Prompt Flow to Azure Function
+- ✅ **Structured Responses**: Returns JSON responses with answer, original query, timestamp, and status
+- ✅ **System Prompt**: Uses a helpful AI assistant system prompt for technical explanations
+- ✅ **HTTP Trigger**: Exposes a RESTful endpoint for easy integration
+- ✅ **Environment-based Configuration**: Secure configuration using environment variables (API key, endpoint, deployment name)
+
+### Project Structure
+```
+azure-ai-studio-flow-function/
+├── function_app.py          # Main function code (converted from Prompt Flow)
+├── requirements.txt         # Python dependencies
+├── host.json               # Azure Functions host configuration
+├── local.settings.json     # Local development settings (git-ignored)
+└── .gitignore             # Git ignore rules for sensitive files
+```
+
+### Prerequisites
+- Python 3.9 or higher
+- Azure Functions Core Tools v4
+- Azure OpenAI resource with:
+  - Endpoint URL
+  - Deployment name (e.g., "gpt-4.1-mini")
+  - API key
+
+### Setup Instructions
+
+1. **Navigate to the function directory**:
+   ```bash
+   cd azure-ai-studio-flow-function
+   ```
+
+2. **Install Python dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Configure environment variables** in `local.settings.json`:
+   ```json
+   {
+     "Values": {
+       "AZURE_OPENAI_ENDPOINT": "https://your-resource.openai.azure.com/openai/v1",
+       "AZURE_OPENAI_DEPLOYMENT_NAME": "gpt-4.1-mini",
+       "AZURE_OPENAI_API_KEY": "your-api-key"
+     }
+   }
+   ```
+
+4. **Run locally**:
+   ```bash
+   func start
+   ```
+
+5. **Test the function**:
+   ```bash
+   # Default question
+   curl http://localhost:7071/api/ai_studio_flow
+   
+   # Custom question
+   curl -X POST http://localhost:7071/api/ai_studio_flow \
+     -H "Content-Type: application/json" \
+     -d '{"user_question": "Explain quantum computing"}'
+   ```
+
+### Usage Examples
+
+**POST request with user question**:
+```bash
+curl -X POST http://localhost:7071/api/ai_studio_flow \
+  -H "Content-Type: application/json" \
+  -d '{"user_question": "What is machine learning?"}'
+```
+
+**POST request (single line)**:
+```bash
+curl -s -X POST http://localhost:7071/api/ai_studio_flow -H "Content-Type: application/json" -d '{"user_question": "Explain neural networks"}'
+```
+
+**Alternative field names** (also supported):
+```bash
+curl -X POST http://localhost:7071/api/ai_studio_flow \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is Python?"}'
+```
+
+**Response example**:
+```json
+{
+  "answer": "Machine learning is a subset of artificial intelligence...",
+  "original_query": "What is machine learning?",
+  "timestamp": "2026-01-11 09:15:30",
+  "status": "success"
+}
+```
+
+### Security Notes
+- ✅ No hardcoded API keys in source code
+- ✅ API key stored in `local.settings.json` (git-ignored)
+- ✅ Environment variables used for all configuration
+- ✅ Connection details (endpoint, deployment name) moved to environment variables
+- ⚠️ **Important**: Never commit `local.settings.json` or any files containing API keys
+- 💡 **Note**: For production, consider using Azure Key Vault or Managed Identity with Azure AD authentication
+
+### Deployment to Azure
+
+1. **Create an Azure Function App** (if not already created):
+   ```bash
+   az functionapp create --resource-group <your-rg> --consumption-plan-location <location> --runtime python --runtime-version 3.9 --functions-version 4 --name <your-function-app-name> --storage-account <your-storage-account>
+   ```
+
+2. **Configure Application Settings**:
+   ```bash
+   az functionapp config appsettings set --name <your-function-app-name> --resource-group <your-rg> \
+     --settings AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/openai/v1" \
+                AZURE_OPENAI_DEPLOYMENT_NAME="gpt-4.1-mini" \
+                AZURE_OPENAI_API_KEY="your-api-key"
+   ```
+
+   **For production**: Consider using Key Vault references instead of direct API key storage:
+   ```bash
+   az functionapp config appsettings set --name <your-function-app-name> --resource-group <your-rg> \
+     --settings AZURE_OPENAI_API_KEY="@Microsoft.KeyVault(SecretUri=https://your-vault.vault.azure.net/secrets/openai-api-key/)"
+   ```
+
+3. **Deploy the function**:
+   ```bash
+   func azure functionapp publish <your-function-app-name>
+   ```
+
+### Dependencies
+- `azure-functions`: Azure Functions Python SDK
+- `openai`: OpenAI Python SDK (supports Azure OpenAI endpoints)
+
+### Original Prompt Flow Details
+This function was converted from an Azure AI Studio Prompt Flow that included:
+- **chat_with_gpt node**: LLM node using Azure OpenAI with system prompt for technical explanations
+- **response node**: Python tool that structures the response with metadata (timestamp, status, etc.)
+- **Flow connection**: Originally used connection `ai-savchenkodi0034ai454392453957_aoai` (now uses environment variables)
+
+---
+
 ## 📝 Template for Future Similar Scripts
 
 When creating new Azure Functions for other AI services, follow this structure:
@@ -357,6 +504,12 @@ When creating new Azure Functions for other AI services, follow this structure:
   - SDK: `openai` (with Azure OpenAI endpoints)
   - Endpoint: `https://{resource-name}.openai.azure.com/openai/v1`
   - Location: `azure-openai-function/`
+  
+- [x] **Azure AI Studio Flow** - Prompt Flow converted to Azure Function ✅ Completed
+  - SDK: `openai` (with Azure OpenAI endpoints)
+  - Endpoint: `https://{resource-name}.openai.azure.com/openai/v1`
+  - Location: `azure-ai-studio-flow-function/`
+  - Note: Converted from Azure AI Studio Prompt Flow
   
 - [ ] **Azure Speech Service** - Speech-to-text and text-to-speech
   - SDK: `azure-cognitiveservices-speech`
