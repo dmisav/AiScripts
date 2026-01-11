@@ -7,6 +7,7 @@ A collection of Azure Functions demonstrating various Azure AI services integrat
 ```
 AiScripts/
 ├── azure-text-analytics-function/    # Text Analytics sentiment analysis function
+├── azure-openai-function/            # Azure OpenAI GPT chat completions function
 ├── [future-functions]/               # Additional Azure Functions will be added here
 └── README.md                         # This file
 ```
@@ -85,6 +86,23 @@ azure-text-analytics-function/
    curl http://localhost:7071/api/text_analytics
    ```
 
+### Usage Examples
+
+**Basic GET request** (uses default test document):
+```bash
+curl http://localhost:7071/api/text_analytics
+```
+
+**GET request (verbose output)**:
+```bash
+curl -v http://localhost:7071/api/text_analytics
+```
+
+**Response example**:
+```
+Auth Success! Sentiment is: positive
+```
+
 ### Security Notes
 - ✅ No hardcoded secrets or API keys in source code
 - ✅ Uses `DefaultAzureCredential` for authentication
@@ -123,6 +141,145 @@ azure-text-analytics-function/
 - `azure-functions`: Azure Functions Python SDK
 - `azure-identity`: Azure authentication library
 - `azure-ai-textanalytics`: Azure Text Analytics client library
+
+---
+
+## 🤖 Azure OpenAI Function
+
+### Overview
+The `azure-openai-function` folder contains an Azure Function that demonstrates how to interact with Azure OpenAI Service using the OpenAI Python SDK. The function provides chat completions using GPT models deployed on Azure.
+
+### Features
+- ✅ **Azure OpenAI Integration**: Uses OpenAI SDK with Azure OpenAI endpoints
+- ✅ **Chat Completions**: Supports GPT model chat completions
+- ✅ **HTTP Trigger**: Exposes a RESTful endpoint for easy integration
+- ✅ **Environment-based Configuration**: Secure configuration using environment variables (API key, endpoint, deployment name)
+- ✅ **Request Body Support**: Accepts custom messages via POST request body
+
+### Project Structure
+```
+azure-openai-function/
+├── function_app.py          # Main function code using Azure Functions v2 programming model
+├── requirements.txt         # Python dependencies
+├── host.json               # Azure Functions host configuration
+├── local.settings.json     # Local development settings (git-ignored)
+└── .gitignore             # Git ignore rules for sensitive files
+```
+
+### Prerequisites
+- Python 3.9 or higher
+- Azure Functions Core Tools v4
+- Azure OpenAI resource with:
+  - Endpoint URL
+  - Deployment name (e.g., "gpt-4o-mini")
+  - API key
+
+### Setup Instructions
+
+1. **Navigate to the function directory**:
+   ```bash
+   cd azure-openai-function
+   ```
+
+2. **Install Python dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Configure environment variables** in `local.settings.json`:
+   ```json
+   {
+     "Values": {
+       "AZURE_OPENAI_ENDPOINT": "https://your-resource.openai.azure.com/openai/v1",
+       "AZURE_OPENAI_DEPLOYMENT_NAME": "your-deployment-name",
+       "AZURE_OPENAI_API_KEY": "your-api-key"
+     }
+   }
+   ```
+
+4. **Run locally**:
+   ```bash
+   func start
+   ```
+
+5. **Test the function**:
+   ```bash
+   # Default message (GET request)
+   curl http://localhost:7071/api/openai_chat
+   
+   # Custom message (POST request)
+   curl -X POST http://localhost:7071/api/openai_chat \
+     -H "Content-Type: application/json" \
+     -d '{"message": "Say hello in Spanish"}'
+   ```
+
+### Usage Examples
+
+**Default GET request** (uses default message "What is the capital of France?"):
+```bash
+curl http://localhost:7071/api/openai_chat
+```
+
+**POST request with custom message**:
+```bash
+curl -X POST http://localhost:7071/api/openai_chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Say hello in Spanish"}'
+```
+
+**POST request (single line)**:
+```bash
+curl -s -X POST http://localhost:7071/api/openai_chat -H "Content-Type: application/json" -d '{"message": "Explain quantum computing in simple terms"}'
+```
+
+**POST request with verbose output**:
+```bash
+curl -v -X POST http://localhost:7071/api/openai_chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is the meaning of life?"}'
+```
+
+**Response example**:
+```
+Hola! (Hello in Spanish)
+```
+
+### Security Notes
+- ✅ No hardcoded API keys in source code
+- ✅ API key stored in `local.settings.json` (git-ignored)
+- ✅ Environment variables used for all configuration
+- ⚠️ **Important**: Never commit `local.settings.json` or any files containing API keys
+- 💡 **Note**: For production, consider using Azure Key Vault or Managed Identity with Azure AD authentication
+
+### Deployment to Azure
+
+1. **Create an Azure Function App** (if not already created):
+   ```bash
+   az functionapp create --resource-group <your-rg> --consumption-plan-location <location> --runtime python --runtime-version 3.9 --functions-version 4 --name <your-function-app-name> --storage-account <your-storage-account>
+   ```
+
+2. **Configure Application Settings**:
+   ```bash
+   az functionapp config appsettings set --name <your-function-app-name> --resource-group <your-rg> \
+     --settings AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/openai/v1" \
+                AZURE_OPENAI_DEPLOYMENT_NAME="your-deployment-name" \
+                AZURE_OPENAI_API_KEY="your-api-key"
+   ```
+
+   **For production**: Consider using Key Vault references instead of direct API key storage:
+   ```bash
+   az functionapp config appsettings set --name <your-function-app-name> --resource-group <your-rg> \
+     --settings AZURE_OPENAI_API_KEY="@Microsoft.KeyVault(SecretUri=https://your-vault.vault.azure.net/secrets/openai-api-key/)"
+   ```
+
+3. **Deploy the function**:
+   ```bash
+   func azure functionapp publish <your-function-app-name>
+   ```
+
+### Dependencies
+- `azure-functions`: Azure Functions Python SDK
+- `openai`: OpenAI Python SDK (supports Azure OpenAI endpoints)
 
 ---
 
@@ -196,9 +353,10 @@ When creating new Azure Functions for other AI services, follow this structure:
   - SDK: `azure-ai-vision`
   - Endpoint: `https://{resource-name}.cognitiveservices.azure.com`
   
-- [ ] **Azure OpenAI Service** - GPT models integration
-  - SDK: `azure-openai`
-  - Endpoint: `https://{resource-name}.openai.azure.com`
+- [x] **Azure OpenAI Service** - GPT models integration ✅ Completed
+  - SDK: `openai` (with Azure OpenAI endpoints)
+  - Endpoint: `https://{resource-name}.openai.azure.com/openai/v1`
+  - Location: `azure-openai-function/`
   
 - [ ] **Azure Speech Service** - Speech-to-text and text-to-speech
   - SDK: `azure-cognitiveservices-speech`
